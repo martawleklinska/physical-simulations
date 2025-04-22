@@ -13,16 +13,17 @@ for i in eachindex(energy)
     transmission[i] = get_transmission(energy[i] * EV_TO_HARTREE, generate_mass(x2, mass_double), matrix, x2, potential_double)
     reflectance[i] = get_reflectance(matrix)
 end
+##
+with_theme(theme_latexfonts()) do
+    fig = Figure();
+    ax2 = Axis(fig[1, 1], xlabel = "Energy (eV)", ylabel = "Transmission / Reflectance")
 
-fig = Figure();
-ax2 = Axis(fig[1, 1], xlabel = "Energy (eV)", ylabel = "Transmission / Reflectance")
-
-lines!(ax2, energy, transmission, color = :blue, label = "Transmission")
-lines!(ax2, energy, reflectance, color = :red, label = "Reflectance")
-Legend(fig, ax2, "Legend", position = :rb)
-# display(fig)
-save("ex2_trans_refl.pdf", fig)
-
+    lines!(ax2, energy, transmission, color = :blue, label = "Transmission")
+    lines!(ax2, energy, reflectance, color = :red, label = "Reflectance")
+    Legend(fig, ax2, "Legend", position = :rb)
+    # display(fig)
+    save("ex2_trans_refl.pdf", fig)
+end
 ## current--voltage
 
 function current_voltage(V_bias::Float64)
@@ -48,19 +49,18 @@ function current_voltage(V_bias::Float64)
 end
 
 V_bias = collect(LinRange(0., 0.5, 50))
-# negatywny opor rozniczkowy - tunelowanie rezonansowe
+## 
+with_theme(theme_latexfonts()) do
+    fig = Figure();
+    ax3 = Axis(fig[1, 1], xlabel = "V_bias (V)", ylabel = "I (A)")
+    current = zeros(length(V_bias))
 
-fig = Figure();
-ax3 = Axis(fig[1, 1], xlabel = "V_bias (V)", ylabel = "I (A)")
-current = zeros(length(V_bias))
+    for i in eachindex(V_bias)
+        current[i] = current_voltage(V_bias[i])
+    end
 
-for i in eachindex(V_bias)
-    current[i] = current_voltage(V_bias[i])
+    lines!(ax3, V_bias, current, color = :blue, label = "Current")
+    Legend(fig, ax3, "Legend", position = :rb)
+    # display(fig)
+    save("ex2_current.pdf", fig)
 end
-
-lines!(ax3, V_bias, current, color = :blue, label = "Current")
-Legend(fig, ax3, "Legend", position = :rb)
-# display(fig)
-save("ex2_current.pdf", fig)
-
-println("Current: ", current)

@@ -48,7 +48,7 @@ function compute_effective_potentials(x::Vector{Float64}, potential2D, nmax::Int
     W_nm = 50.0, m_eff = 0.063)
 
     W = W_nm * NM_TO_BOHR
-    y = collect(LinRange(-W/2, W/2, 200)) 
+    y = collect(LinRange(-W/2, W/2, 100)) 
     dy = y[2] - y[1]
     N = length(y)
 
@@ -85,16 +85,18 @@ end
 qpc_potential_2D = make_potential_QPC(left, right; dist=dist)
 En_all = compute_effective_potentials(x_qpc, qpc_potential_2D, 5)
 
-fig = Figure()
-ax = Axis(fig[1, 1], xlabel = "x (nm)", ylabel = "E (eV)", title = "Efektywny potencjał Eₙ(x)")
+##
+with_theme(theme_latexfonts()) do
+    fig = Figure()
+    ax = Axis(fig[1, 1], xlabel = "x (nm)", ylabel = "E (eV)", title = "Efektywny potencjał Eₙ(x)")
 
-for (n, En) in enumerate(En_all)
-    lines!(ax, x_qpc / NM_TO_BOHR, En / EV_TO_HARTREE, label = "n = $n")
+    for (n, En) in enumerate(En_all)
+        lines!(ax, x_qpc / NM_TO_BOHR, En / EV_TO_HARTREE, label = "n = $n")
+    end
+    Legend(fig[1, 2], ax, "Legend")
+    display(fig)
+    save("ex3_potential.pdf", fig)
 end
-Legend(fig[1, 2], ax, "Legend")
-display(fig)
-save("ex3_potential.pdf", fig)
-
 
 ## conductance
 include("ex1.jl")
@@ -120,33 +122,26 @@ function conductance(energy::Float64, number_of_states::Int64, qpc_pot)
     return trans
 end
 
-energy2 = collect(LinRange(0.0001, .065, 10))
-
-transmis = zeros(length(energy2))
-for i in eachindex(energy2)
-    transmis[i] = conductance(energy2[i], 2)
-    println("Energy: ", energy2[i], " eV, Conductance: ", transmis[i])
-end
-energy3 = collect(LinRange(0.065, .2, 40))
+energy3 = collect(LinRange(0.0001, .2, 50))
 
 transmis2 = zeros(length(energy3))
 for i in eachindex(energy3)
     transmis2[i] = conductance(energy3[i], 5)
     println("Energy: ", energy3[i], " eV, Conductance: ", transmis2[i])
 end
+##
+with_theme(theme_latexfonts()) do
+    fig = Figure();
+    ax2 = Axis(fig[1, 1], xlabel = "E (eV)", ylabel = "G (2e²/h)")
+
+    lines!(ax2, energy3, transmis2, color = :blue, label = "Conductance")
+    Legend(fig[1, 2], ax2, "Legend")
+    # display(fig)
+    save("ex3_conductance.pdf", fig)
+end
 
 
-fig = Figure();
-ax2 = Axis(fig[1, 1], xlabel = "E (eV)", ylabel = "G (2e²/h)")
-
-lines!(ax2, energy2, transmis, color = :blue, label = "Conductance")
-lines!(ax2, energy3, transmis2, color = :blue, label = "Conductance")
-Legend(fig[1, 2], ax2, "Legend")
-display(fig)
-
-
-
-## ex3
+## ex3: conductance vs Vg
 Vg_values = collect(LinRange(0.0, 25, 100)) 
 conductance_vs_Vg = Dict{Float64, Vector{Float64}}()
 fermi_energies = [0.050, 0.100] 
@@ -171,10 +166,11 @@ with_theme(theme_latexfonts()) do
     ax = Axis(fig[1, 1], xlabel = "Gate Voltage Vg (eV)", ylabel = "Conductance G (2e²/h)", title = "Conductance vs. Gate Voltage")
 
     for E in fermi_energies
-        lines!(ax, Vg_values, conductance_vs_Vg[E], label = "E = $(E) meV")
+        lines!(ax, Vg_values, conductance_vs_Vg[E], label = "E = $(E) eV")
     end
 
     axislegend(ax)
-    display(fig)
+    # display(fig)
+    save("ex3_conductance_vs_Vg.pdf", fig)
 
 end
