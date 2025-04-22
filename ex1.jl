@@ -15,20 +15,22 @@ end
 
 function transfer_matrix_whole(energy::Float64, x::Vector{Float64}, potential::Function, mass::Function)
     N = length(x) - 1
-    k::Vector{Complex{Float64}} = wave_number(energy, generate_potential(x,  potential), generate_mass(x, mass))
-    matrix::Matrix{Complex{Float64}} = transfer_matrix(k, x, 1, generate_mass(x, mass))
+    m = generate_mass(x, mass)
+    k::Vector{Complex{Float64}} = wave_number(energy, generate_potential(x,  potential), m)
+    matrix::Matrix{Complex{Float64}} = transfer_matrix(k, x, 1, m)
     for n in 2:N
-        matrix *= transfer_matrix(k, x, n, generate_mass(x, mass))  
+        matrix *= transfer_matrix(k, x, n, m)  
     end
     return matrix
 end
 
 function transfer_matrix_whole(energy::Float64, x::Vector{Float64}, potential::Vector{Float64}, mass::Function)
     N = length(x) - 1
-    k::Vector{Complex{Float64}} = wave_number(energy, potential, generate_mass(x, mass))
-    matrix::Matrix{Complex{Float64}} = transfer_matrix(k, x, 1, generate_mass(x, mass))
+    m = generate_mass(x, mass)
+    k::Vector{Complex{Float64}} = wave_number(energy, potential, m)
+    matrix::Matrix{Complex{Float64}} = transfer_matrix(k, x, 1, m)
     for n in 2:N
-        matrix *= transfer_matrix(k, x, n, generate_mass(x, mass))  
+        matrix *= transfer_matrix(k, x, n, m)  
     end
     return matrix
 end

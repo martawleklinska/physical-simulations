@@ -71,8 +71,8 @@ function compute_effective_potentials(x::Vector{Float64}, potential2D, nmax::Int
     for (i, xval) in enumerate(x)
         V_y = [potential2D(xval, yval) for yval in y]
         V = Diagonal(V_y)
-        H = T + V
-        evals = eigen(H).values
+        H = T .+ V
+        evals = eigvals(H)
         for n in 1:nmax
             En_all[n][i] = evals[n]
         end
@@ -109,6 +109,17 @@ function conductance(energy::Float64, number_of_states::Int64)
     end
     return trans
 end
+
+function conductance(energy::Float64, number_of_states::Int64, qpc_pot)
+    trans = 0
+    for i in eachindex(qpc_pot)
+        matrix = transfer_matrix_whole(energy * EV_TO_HARTREE, x_qpc, qpc_pot[i], mass_constant)
+        transmission = get_transmission(energy * EV_TO_HARTREE, generate_mass(x_qpc, mass_constant), matrix, x_qpc, qpc_pot[i])
+        trans += transmission
+    end
+    return trans
+end
+
 energy2 = collect(LinRange(0.0001, .065, 10))
 
 transmis = zeros(length(energy2))
@@ -136,31 +147,34 @@ display(fig)
 
 
 ## ex3
-Vg_values = collect(LinRange(0.0, 20, 70)) 
+Vg_values = collect(LinRange(0.0, 25, 100)) 
 conductance_vs_Vg = Dict{Float64, Vector{Float64}}()
-fermi_energies = [50.0, 100.0] 
+fermi_energies = [0.050, 0.100] 
 
-for E in fermi_energies
-    conductances = Float64[]
-    for Vg in Vg_values
-        qpc_potential_2D = make_potential_QPC(left, right; dist=dist, V_g1=Vg * EV_TO_HARTREE, V_g2=Vg * EV_TO_HARTREE)
-        
-        En_all = compute_effective_potentials(x_qpc, qpc_potential_2D, 5)
-        
-        G = conductance(E, 5)  
-        push!(conductances, G)
+using ProgressMeter
+
+conductance_vs_Vg[fermi_energies[1]] = Float64[]
+conductance_vs_Vg[fermi_energies[2]] = Float64[]
+@showprogress desc = "Calculating QPC vs Voltage" for Vg in Vg_values
+    qpc_potential_2D = make_potential_QPC(left, right; dist=dist, V_g1=Vg * EV_TO_HARTREE, V_g2=Vg * EV_TO_HARTREE)
+    En_all = compute_effective_potentials(x_qpc, qpc_potential_2D, 5)
+    for E in fermi_energies
+        G = conductance(E, 5, En_all)  
+        push!(conductance_vs_Vg[E], G)
     end
-    conductance_vs_Vg[E] = conductances
 end
+##
 
-fig = Figure();
-ax = Axis(fig[1, 1], xlabel = "Gate Voltage Vg (eV)", ylabel = "Conductance G (2e²/h)", title = "Conductance vs. Gate Voltage")
+with_theme(theme_latexfonts()) do
 
-for E in fermi_energies
-    lines!(ax, Vg_values, conductance_vs_Vg[E], label = "E = $(E) meV")
+    fig = Figure();
+    ax = Axis(fig[1, 1], xlabel = "Gate Voltage Vg (eV)", ylabel = "Conductance G (2e²/h)", title = "Conductance vs. Gate Voltage")
+
+    for E in fermi_energies
+        lines!(ax, Vg_values, conductance_vs_Vg[E], label = "E = $(E) meV")
+    end
+
+    axislegend(ax)
+    display(fig)
+
 end
-
-axislegend(ax)
-display(fig)
-
-
