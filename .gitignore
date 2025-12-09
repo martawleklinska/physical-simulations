@@ -1,0 +1,9 @@
+*.pdf
+.vscode/
+figures/
+01_quantum_dot_1e/figures/
+graphs/
+tasks/
+figs/
+plots/
+__pycache__/
